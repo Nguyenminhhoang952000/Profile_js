@@ -35,6 +35,7 @@ const disable = ()=>{
     previous.style.opacity = count===1? 0.5:1;
     next.style.opacity = count===Math.ceil(test.length/x)? 0.5:1;
 }
+disable()
 next.onclick=()=>{
     // Làm tròn trên để có thể check các page nằm trong các khoảng [a,b]
     const nextValue = searchValue.length>=1?searchValue:test

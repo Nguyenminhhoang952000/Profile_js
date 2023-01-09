@@ -36,7 +36,7 @@ export function CovertInformation(values,test,emailItem){
         if(!checkBoolean&&replaceEmail.includes(emailBlur)){
             const lengthEmail = test.filter((valueTest=>{
                 let checkEmail = valueTest.email.toString().replace(/[0-9]/g,'');
-                return checkEmail.includes(emailBlur);
+                return checkEmail.includes(emailBlur.replace(/[0-9]/g,''));
             }))
             emailBlur=emailBlur.replace(/@ntq-solution.com.vn/,`${lengthEmail.length+1}@ntq-solution.com.vn`)
         }

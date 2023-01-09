@@ -4,7 +4,7 @@ import { CovertInformation } from "./covertInformation.js";
 import toat from "./toat.js";
 import { previous,next,upValue,pagerValue,pagerLimit,
         inputSearch,sortValue,inputItem,emailItem,jobItem,countItem,
-        addItem,selectPerpage,inputItemModal,modalCount,modalEmail,addBtnModal,modalJob
+        addItem,selectPerpage,inputItemModal,modalCount,modalEmail,addBtnModal,modalJob,hiddenName
         } 
 from "./selectElement.js";
 // Array render
@@ -13,42 +13,47 @@ let resultValue=[];
 let count =1 ; 
 // Number page
 let x=40;
+let searchValue = []
 // Length EMPLOYEES
-pagerLimit.innerHTML = EMPLOYEES.length
+let test = [...EMPLOYEES]
 // Pagination
 const pagerCount = (value,n,perpage=40)=>{ 
     console.log("perpage",perpage)
     const valueSlice = value.slice((n-1)*perpage,(n-1)*perpage + perpage);
     return valueSlice
 }
+renderResult(test,count,x);
 // Render 
 function renderResult(data,count,perpage){
     resultValue = [...pagerCount(data,count,perpage)];
     upValue.innerHTML=renderData(resultValue)
-    pagerValue.innerHTML = `${(count-1)*perpage }-${(count-1)*perpage+perpage}`
+    pagerValue.innerHTML = resultValue.length>=count*perpage?`${(count-1)*perpage }-${(count-1)*perpage+perpage}`:`${(count-1)*perpage }-${resultValue.length+(count-1)*perpage}`
+    pagerLimit.innerHTML = data.length
 }
-let test = [...EMPLOYEES]
-renderResult(test,count,x);
 // Click next
+const disable = ()=>{
+    previous.style.opacity = count===1? 0.5:1;
+    next.style.opacity = count===Math.ceil(test.length/x)? 0.5:1;
+}
 next.onclick=()=>{
-    pagerLimit.innerHTML = test.length
     // Làm tròn trên để có thể check các page nằm trong các khoảng [a,b]
-    if(count < Math.ceil(test.length/x)){
+    const nextValue = searchValue.length>=1?searchValue:test
+    if(count < Math.ceil(nextValue.length/x)){
         count++;
-        console.log(x)
-        resultValue = [...pagerCount(test,count,x)];
-        console.log(test)
-        console.log(resultValue)
-        upValue.innerHTML=renderData(resultValue)
-        pagerValue.innerHTML = resultValue.length>=count*x?`${(count-1)*x }-${(count-1)*x+x}`:`${(count-1)*x }-${resultValue.length+(count-1)*x}`
+        if(searchValue.length>=1){
+            renderResult(searchValue,count,x)
+        }
+        else{
+            renderResult(test,count,x)
+        }
         previous.style.opacity = 1;
     }
     else{
         previous.style.opacity = 1;
         next.style.opacity = 0.5;
-        count = Math.ceil(test.length/x);
+        count = Math.ceil(nextValue.length/x);
     }
-    if(count === Math.ceil(test.length/x)){
+    if(count === Math.ceil(nextValue.length/x)){
         previous.style.opacity = 1;
         next.style.opacity = 0.5;
     }
@@ -56,14 +61,17 @@ next.onclick=()=>{
         next.style.opacity = 1;
     }  
 }
-previous.style.opacity = count===1? 0.5:1;
-next.style.opacity = count===Math.ceil(test.length/x)? 0.5:1;
+
 //Click previous
 previous.onclick=()=>{
-    pagerLimit.innerHTML = test.length
     if(count>1){
         count--;
-        renderResult(test,count,x);
+        if(searchValue.length>=1){
+            renderResult(searchValue,count,x)
+        }
+        else{
+            renderResult(test,count,x)
+        }
         previous.style.opacity = 1;
         next.style.opacity = 1;
     } 
@@ -79,7 +87,6 @@ previous.onclick=()=>{
         previous.style.opacity = 1;
     }
 }
-let searchValue = []
 // Search
 inputSearch.onkeyup=(e)=>{
     const valueInput = e.target.value.toLocaleLowerCase().trim();
@@ -99,13 +106,8 @@ inputSearch.onkeyup=(e)=>{
             else if(sortValue.value==2){
                 searchValue = [...sortZa(searchValue)]
             }
-            pagerLimit.innerHTML = searchValue.length
-            resultValue = [...pagerCount(searchValue,count,x)];
-            console.log(resultValue)
-            upValue.innerHTML=renderData(resultValue)
-            pagerValue.innerHTML = resultValue.length>=x?`${(count-1)*x }-${(count-1)*x+x}`:`${(count-1)*x }-${resultValue.length}`
-            previous.style.opacity = count===1? 0.5:1;
-            next.style.opacity = count===Math.ceil(searchValue.length/x)? 0.5:1;
+            renderResult(searchValue,count,x)
+            disable()
         }
         else{
             toat({
@@ -130,10 +132,8 @@ inputSearch.oninput=(e)=>{
         else if(sortValue.value==2){
             test = [...sortZa(test)]
         }
-        previous.style.opacity = count===1? 0.5:1;
-        next.style.opacity = count===Math.ceil(test.length/x)? 0.5:1;
-        pagerLimit.innerHTML = test.length
         renderResult(test,count,x);
+        disable()
     }
 }
 // Select perpage
@@ -141,8 +141,7 @@ selectPerpage.onchange = (e)=>{
     count=1
     x = Number(e.target.value)
     renderResult(test,count,x);
-    previous.style.opacity = count===1? 0.5:1;
-    next.style.opacity = count===Math.ceil(test.length/x)? 0.5:1;
+    disable()
 }
 //Sort
 const sortAz = (test)=>{     //Sort A-Z
@@ -187,10 +186,8 @@ sortValue.onchange =(e)=>{
         }
         test = [...testSort]
     }
-    previous.style.opacity = count===1? 0.5:1;
-    next.style.opacity = count===Math.ceil(test.length/x)? 0.5:1;
-    pagerLimit.innerHTML = test.length
     renderResult(test,count,x);
+    disable()
 }
 
 // Count pager = max id data
@@ -202,7 +199,30 @@ countItem.innerHTML = counter
 modalCount.innerHTML = counter
 // Add data blur menu
 inputItem.onblur=(e)=>{
-    CovertInformation(e.target,test,emailItem)
+    const covertValueNumber = e.target.value.replace(/[^0-9]/g,'')
+    if( e.target.value.trim()&&!covertValueNumber){
+        hiddenName.innerHTML=""
+        CovertInformation(e.target,test,emailItem)
+    }
+    else{
+        hiddenName.innerHTML="Tên nhân viên không hợp lệ"
+        toat({
+            title: 'Thất bại',
+            message:'Tên nhân viên không hợp lệ',
+            type: 'error',
+            duration: 300   
+        })
+    }
+}
+inputItem.oninput=(e)=>{
+    const covertValueNumber = e.target.value.replace(/[^0-9]/g,'')
+    if( e.target.value&&!covertValueNumber){
+        hiddenName.innerHTML=""
+    }
+    else{
+        hiddenName.innerHTML="Tên nhân viên không hợp lệ"
+
+    }
 }
 // blur of modal
 inputItemModal.onblur=(e)=>{
@@ -220,8 +240,8 @@ const clickAddBtn = (inputValue,inputJob,inputMail)=>{
         }
         EMPLOYEES.unshift(data)
         test = [...EMPLOYEES]
-        console.log(searchValue)
         if(searchValue.length>=1){
+            console.log('search')
             const valueInput = document.querySelector('.employess__input').value.toLocaleLowerCase().trim();
             const resultInput = valueInput&&test.filter((value)=>{
                 const checkBoolean = typeof value.email == "boolean";
@@ -247,7 +267,6 @@ const clickAddBtn = (inputValue,inputJob,inputMail)=>{
             }
             renderResult(test,count,x);
         }
-        pagerLimit.innerHTML = test.length
         countItem.innerHTML = counter +1
         modalCount.innerHTML = counter +1
         counter++
@@ -256,9 +275,7 @@ const clickAddBtn = (inputValue,inputJob,inputMail)=>{
         inputMail.innerHTML = 'Email'
         inputJob.value=''
         count=1;
-        pagerValue.innerHTML = resultValue.length>=x?`${(count-1)*x }-${(count-1)*x+x}`:`${(count-1)*x }-${resultValue.length}`
-        previous.style.opacity = count===1? 0.5:1;
-        next.style.opacity = count===Math.ceil(test.length/x)? 0.5:1;
+        disable()
         modal.classList.remove('open')
         toat({
             title: 'Thành công',
@@ -284,5 +301,3 @@ addItem.onclick = ()=>{
 addBtnModal.onclick = ()=>{
     clickAddBtn(inputItemModal,modalJob,modalEmail)
 }
-
-

@@ -99,3 +99,9 @@
 .profile__details--number{
     margin: 0 0 9px;
 }
+.hidden__name{
+    position: absolute;
+    margin-top: 32px;
+    margin-left: 2px;
+    color: rgb(240, 81, 81);
+}
